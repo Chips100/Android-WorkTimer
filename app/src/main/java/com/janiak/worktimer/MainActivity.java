@@ -1,41 +1,28 @@
 package com.janiak.worktimer;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
-import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.janiak.worktimer.asynctasks.LoadUnfinishedWorkTimeTask;
+import com.janiak.worktimer.asynctasks.ToggleActiveWorkTimeTask;
 import com.janiak.worktimer.storage.WorkTime;
-import com.janiak.worktimer.storage.WorkTimeAlreadyFinishedException;
-import com.janiak.worktimer.storage.WorkTimeDataSource;
 
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
+import org.joda.time.Period;
 
 public class MainActivity extends ActionBarActivity {
     private TextView activeTimerDisplay;
     private Button timerRecordButton;
 
     private WorkTime activeWorkTime;
-    private PeriodFormatter periodFormatter = new PeriodFormatterBuilder()
-            .minimumPrintedDigits(2).printZeroAlways()
-            .appendHours().appendSeparator(":")
-            .appendMinutes().appendSeparator(":")
-            .appendSeconds().toFormatter();
-
     private final Handler updateTimerHandler = new Handler();
-    private final Runnable updateTimerRunnable = new Runnable() {
-        @Override
-        public void run() {
-        updateActiveTimerDisplay();
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +33,16 @@ public class MainActivity extends ActionBarActivity {
         timerRecordButton = (Button)findViewById(R.id.timerRecordButton);
 
         loadUnfinishedWorkTimeFromDb();
-        updateUiElements();
+    }
+
+    private void loadUnfinishedWorkTimeFromDb() {
+        new LoadUnfinishedWorkTimeTask() {
+            @Override
+            protected void onPostExecute(WorkTime workTime) {
+                activeWorkTime = workTime;
+                updateUiElements();
+            }
+        }.execute(this);
     }
 
     @Override
@@ -71,34 +67,14 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void startTimer(View view) {
-        WorkTimeDataSource workTimeDataSource = new WorkTimeDataSource(this);
-        workTimeDataSource.open();
-
-        if (activeWorkTime == null) {
-            activeWorkTime = workTimeDataSource.insertWorkTime(WorkTime.startNew());
-        }
-        else {
-            try {
-                workTimeDataSource.updateFinishedWorkTime(activeWorkTime.finish());
+    public void toggleTimer(View view) {
+        new ToggleActiveWorkTimeTask() {
+            @Override
+            protected void onPostExecute(WorkTime workTime) {
+                activeWorkTime = !workTime.isFinished() ? workTime : null;
+                updateUiElements();
             }
-            catch(WorkTimeAlreadyFinishedException exception) {
-                // error message.
-                // forget about the activeWorkTime as if has already been finished.
-            }
-
-            activeWorkTime = null;
-        }
-
-        workTimeDataSource.close();
-        updateUiElements();
-    }
-
-    private void loadUnfinishedWorkTimeFromDb() {
-        WorkTimeDataSource workTimeDataSource = new WorkTimeDataSource(this);
-        workTimeDataSource.open();
-        activeWorkTime = workTimeDataSource.getUnfinishedWorkTime();
-        workTimeDataSource.close();
+        }.execute(this);
     }
 
     private void updateUiElements() {
@@ -115,11 +91,16 @@ public class MainActivity extends ActionBarActivity {
             activeTimerDisplay.setText("");
         }
         else {
-            Duration duration = new Duration(activeWorkTime.getStart(), DateTime.now());
-            activeTimerDisplay.setText(periodFormatter.print(duration.toPeriod()));
+            Period period = new Duration(activeWorkTime.getStart(), DateTime.now()).toPeriod();
+            activeTimerDisplay.setText(JodaFormatterProvider.getDurationFormatter().print(period));
 
             // if we have an active running timer, schedule a UI update.
-            updateTimerHandler.postDelayed(updateTimerRunnable, 1000);
+            updateTimerHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    updateActiveTimerDisplay();
+                }
+            }, 1000);
         }
     }
 }
