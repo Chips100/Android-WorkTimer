@@ -32,7 +32,7 @@ public abstract class ToggleActiveWorkTimeTask extends AsyncTask<Context, Void, 
             }
             catch(WorkTimeAlreadyFinishedException exception) {
                 // error message.
-                // forget about the activeWorkTime as it has already been finished inbetween.
+                // forget about the activeWorkTime as it has already been finished in between.
             }
         }
 

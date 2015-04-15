@@ -8,6 +8,9 @@ import android.database.sqlite.SQLiteDatabase;
 
 import org.joda.time.DateTime;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Chips on 10.04.2015.
  */
@@ -40,6 +43,35 @@ public class WorkTimeDataSource {
 
         cursor.close();
         return unfinishedWorkTime;
+    }
+
+    public List<WorkTime> getRecordedWorkTimes(DateTime from, DateTime to) {
+        List<WorkTime> workTimes = new ArrayList<WorkTime>();
+
+        // TODO: currently, we set replace missing parameters with min/max values.
+        // It would be better to remove the condition itself.
+        // Joining the clauses with AND would be helpful, see:
+        // http://stackoverflow.com/questions/1751844/java-convert-liststring-to-a-joind-string
+        String selection = SqliteOpenHelper_WorkTime.COLUMN_END
+                + " >= ? AND ? >= " + SqliteOpenHelper_WorkTime.COLUMN_START;
+
+        String[] selectArgs = new String[] {
+            String.valueOf(from != null ? from.getMillis() : Long.MIN_VALUE),
+            String.valueOf(to != null ? to.getMillis() : Long.MAX_VALUE)
+        };
+
+        Cursor cursor = database.query(
+            SqliteOpenHelper_WorkTime.TABLE_WORKTIMES, null, selection, selectArgs,
+            null, null, SqliteOpenHelper_WorkTime.COLUMN_START
+        );
+
+        cursor.moveToFirst();
+        while(!cursor.isAfterLast()) {
+            workTimes.add(cursorToWorkTime(cursor));
+        }
+
+        cursor.close();
+        return workTimes;
     }
 
     public WorkTime insertWorkTime(WorkTime workTime) {
