@@ -1,14 +1,17 @@
-package com.janiak.worktimer;
+package com.janiak.worktimer.fragments;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.ActionBarActivity;
-import android.view.Menu;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.janiak.worktimer.JodaFormatterProvider;
+import com.janiak.worktimer.R;
 import com.janiak.worktimer.asynctasks.LoadUnfinishedWorkTimeTask;
 import com.janiak.worktimer.asynctasks.ToggleActiveWorkTimeTask;
 import com.janiak.worktimer.storage.WorkTime;
@@ -17,7 +20,10 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.Period;
 
-public class MainActivity extends ActionBarActivity {
+/**
+ * Created by Chips on 29.04.2015.
+ */
+public class TimerFragment extends Fragment {
     private TextView activeTimerDisplay;
     private Button timerRecordButton;
 
@@ -25,14 +31,15 @@ public class MainActivity extends ActionBarActivity {
     private final Handler updateTimerHandler = new Handler();
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_tabbed_timer, container, false);
 
-        activeTimerDisplay = (TextView)findViewById(R.id.activeTimerDisplay);
-        timerRecordButton = (Button)findViewById(R.id.timerRecordButton);
+        activeTimerDisplay = (TextView)rootView.findViewById(R.id.activeTimerDisplay);
+        timerRecordButton = (Button)rootView.findViewById(R.id.timerRecordButton);
 
         loadUnfinishedWorkTimeFromDb();
+        return rootView;
     }
 
     private void loadUnfinishedWorkTimeFromDb() {
@@ -42,39 +49,18 @@ public class MainActivity extends ActionBarActivity {
                 activeWorkTime = workTime;
                 updateUiElements();
             }
-        }.execute(this);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+        }.execute(this.getActivity());
     }
 
     public void toggleTimer(View view) {
         new ToggleActiveWorkTimeTask() {
             @Override
             protected void onPostExecute(WorkTime workTime) {
+
                 activeWorkTime = !workTime.isFinished() ? workTime : null;
                 updateUiElements();
             }
-        }.execute(this);
+        }.execute(this.getActivity());
     }
 
     private void updateUiElements() {

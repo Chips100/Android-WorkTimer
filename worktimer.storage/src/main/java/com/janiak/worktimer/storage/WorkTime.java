@@ -50,7 +50,6 @@ public final class WorkTime {
         return new WorkTime(id, this.getStart(), this.getEnd());
     }
 
-
     public boolean isPersisted() {
         return this.getId() != DEFAULT_ID;
     }

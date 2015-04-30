@@ -62,12 +62,13 @@ public class WorkTimeDataSource {
 
         Cursor cursor = database.query(
             SqliteOpenHelper_WorkTime.TABLE_WORKTIMES, null, selection, selectArgs,
-            null, null, SqliteOpenHelper_WorkTime.COLUMN_START
+            null, null, SqliteOpenHelper_WorkTime.COLUMN_START + " DESC"
         );
 
         cursor.moveToFirst();
         while(!cursor.isAfterLast()) {
             workTimes.add(cursorToWorkTime(cursor));
+            cursor.moveToNext();
         }
 
         cursor.close();

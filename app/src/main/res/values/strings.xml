@@ -5,4 +5,10 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_tabbed_main">Work Timer</string>
+
+
+    <string name="title_section1">Stechuhr</string>
+    <string name="title_section2">Eingabe</string>
+    <string name="title_section3">Historie</string>
 </resources>
