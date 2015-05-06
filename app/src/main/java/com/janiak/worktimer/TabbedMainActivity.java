@@ -4,6 +4,7 @@ import java.util.Locale;
 
 import android.os.Debug;
 import android.os.Handler;
+import android.os.PersistableBundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -12,6 +13,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,6 +25,7 @@ import android.widget.TextView;
 import com.janiak.worktimer.asynctasks.LoadUnfinishedWorkTimeTask;
 import com.janiak.worktimer.asynctasks.ToggleActiveWorkTimeTask;
 import com.janiak.worktimer.fragments.HistoryFragment;
+import com.janiak.worktimer.fragments.ManualInputFragment;
 import com.janiak.worktimer.fragments.TimerFragment;
 import com.janiak.worktimer.storage.WorkTime;
 
@@ -34,10 +37,6 @@ import org.joda.time.Period;
 public class TabbedMainActivity extends ActionBarActivity implements ActionBar.TabListener {
     SectionsPagerAdapter mSectionsPagerAdapter;
     ViewPager mViewPager;
-
-    private TimerFragment timerFragment;
-    private TimerFragment timerFragment2;
-    private HistoryFragment historyFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +78,6 @@ public class TabbedMainActivity extends ActionBarActivity implements ActionBar.T
         }
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -104,8 +102,6 @@ public class TabbedMainActivity extends ActionBarActivity implements ActionBar.T
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-        // When the given tab is selected, switch to the corresponding page in
-        // the ViewPager.
         mViewPager.setCurrentItem(tab.getPosition());
     }
 
@@ -118,7 +114,11 @@ public class TabbedMainActivity extends ActionBarActivity implements ActionBar.T
     }
 
     public void toggleTimer(View view) {
-        timerFragment.toggleTimer(view);
+        mSectionsPagerAdapter.getTimerFragment().toggleTimer(view);
+    }
+
+    public void saveManualInput(View view) {
+        mSectionsPagerAdapter.getManualInputFragment().saveManualInput(view);
     }
 
     /**
@@ -126,25 +126,52 @@ public class TabbedMainActivity extends ActionBarActivity implements ActionBar.T
      * one of the sections/tabs/pages.
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
+        private TimerFragment timerFragment;
+        private ManualInputFragment manualInputFragment;
+        private HistoryFragment historyFragment;
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
         @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Fragment fragment = (Fragment)super.instantiateItem(container, position);
+
+            switch(position) {
+                case 0: timerFragment = (TimerFragment)fragment;
+                    break;
+                case 1: manualInputFragment = (ManualInputFragment)fragment;
+                    break;
+                case 2: historyFragment = (HistoryFragment)fragment;
+            }
+
+            return fragment;
+        }
+
+        @Override
         public Fragment getItem(int position) {
             switch(position) {
-                case 0: return timerFragment != null ? timerFragment :  (timerFragment = new TimerFragment());
-                case 1: return timerFragment2 = new TimerFragment();
-                case 2: return historyFragment != null ? historyFragment :  (historyFragment = new HistoryFragment());
+                case 0: return new TimerFragment();
+                case 1: return new ManualInputFragment();
+                case 2: return new HistoryFragment();
             }
 
             return null;
         }
 
+        public TimerFragment getTimerFragment() {
+            return timerFragment;
+        }
+        public ManualInputFragment getManualInputFragment() {
+            return manualInputFragment;
+        }
+        public HistoryFragment getHistoryFragment() {
+            return historyFragment;
+        }
+
         @Override
         public int getCount() {
-            // Show 3 total pages.
             return 3;
         }
 

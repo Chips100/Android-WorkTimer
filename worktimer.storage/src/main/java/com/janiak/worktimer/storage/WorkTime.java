@@ -34,6 +34,10 @@ public final class WorkTime {
         return new WorkTime(DEFAULT_ID, DateTime.now(), null);
     }
 
+    public static WorkTime createFinished(DateTime from, DateTime to) {
+        return new WorkTime(DEFAULT_ID, from, to);
+    }
+
     public WorkTime finish() throws WorkTimeAlreadyFinishedException {
         return this.finish(DateTime.now());
     }
